@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+
+    <!-- Produce the XML documentation file so IntelliSense ships with the package.
+         FCMCore holds most of the public API, so this is what gives consumers docs. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <!-- FCMCore is bundled into the FCMService package, never published on its own. -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+</Project>

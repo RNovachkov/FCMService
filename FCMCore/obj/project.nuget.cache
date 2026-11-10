@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "ATtkjfoUrtA=",
+  "success": true,
+  "projectFilePath": "/Users/rumen/Developer/Gitea/NotificationService/FCMService/FCMCore/FCMCore.csproj",
+  "expectedPackageFiles": [
+    "/Users/rumen/.nuget/packages/microsoft.netcore.app.ref/10.0.14/microsoft.netcore.app.ref.10.0.14.nupkg.sha512",
+    "/Users/rumen/.nuget/packages/microsoft.aspnetcore.app.ref/10.0.14/microsoft.aspnetcore.app.ref.10.0.14.nupkg.sha512"
+  ],
+  "logs": []
+}

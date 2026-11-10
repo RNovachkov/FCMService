@@ -1,0 +1,93 @@
+name: Build and Publish to NuGet (Auto-Version)
+
+on:
+  push:
+    branches: [ publish ]
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+
+env:
+  # The package project to pack and publish.
+  PACKAGE_PROJECT: FCMService/FCMService.csproj
+  # The test project (also builds FCMCore + FCMService transitively).
+  TEST_PROJECT: tests/FCMService.Tests/FCMService.Tests.csproj
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write   # Required for Trusted Publishing (OIDC) to NuGet.org
+      contents: write   # Required for the "Create Git Tag" step to push the tag
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Needed for version calculation / tagging
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Get Version from .csproj
+      id: get_version
+      run: |
+        echo "Looking for FCMService.csproj..."
+        find . -name "FCMService.csproj" -type f
+
+        # Find the package .csproj file.
+        CSPROJ_FILE=$(find . -name "FCMService.csproj" -type f | head -n 1)
+
+        if [ -z "$CSPROJ_FILE" ]; then
+          echo "Error: No FCMService.csproj file found"
+          VERSION="10.0.0"
+        else
+          echo "Using .csproj file: $CSPROJ_FILE"
+
+          # Read version directly from the found .csproj file.
+          VERSION=$(grep -oP '<Version>\K[^<]+' "$CSPROJ_FILE" | head -n 1)
+
+          # If Version tag not found, try VersionPrefix.
+          if [ -z "$VERSION" ]; then
+            VERSION=$(grep -oP '<VersionPrefix>\K[^<]+' "$CSPROJ_FILE" | head -n 1)
+          fi
+
+          # Final fallback.
+          if [ -z "$VERSION" ]; then
+            VERSION="10.0.0"
+            echo "Warning: No version found in $CSPROJ_FILE, using default $VERSION"
+          fi
+        fi
+
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Project version: $VERSION"
+
+    - name: Restore dependencies
+      run: dotnet restore "$TEST_PROJECT"
+
+    - name: Build
+      run: dotnet build "$TEST_PROJECT" --configuration Release --no-restore
+
+    - name: Test
+      run: dotnet test "$TEST_PROJECT" --no-build --verbosity normal --configuration Release
+
+    - name: Pack
+      run: dotnet pack "$PACKAGE_PROJECT" --configuration Release --output ./artifacts
+
+    - name: NuGet login (Trusted Publishing)
+      id: login
+      uses: NuGet/login@v1
+      with:
+        user: ${{ secrets.NUGET_USER }}
+
+    - name: Publish to NuGet
+      run: dotnet nuget push ./artifacts/*.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+    - name: Create Git Tag
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git tag "v${{ steps.get_version.outputs.version }}"
+        git push origin "v${{ steps.get_version.outputs.version }}"

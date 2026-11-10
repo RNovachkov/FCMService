@@ -1,0 +1,429 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>FCMCore</name>
+    </assembly>
+    <members>
+        <member name="T:FCMCore.Auth.FcmAccessTokenProvider">
+            <summary>
+            Obtains and caches the OAuth2 access token used to authenticate FCM requests.
+            </summary>
+            <remarks>
+            <para>
+            FCM requires a two-step exchange: this provider signs a short-lived JWT assertion (RS256) with the 
+            service account's private key, then POSTs it to Google's OAuth2 token endpoint to receive an access 
+            token. That access token (valid for about an hour) is what authorizes each <c>messages:send</c> call.
+            </para>
+            <para>
+            The token is fetched lazily and reused until shortly before it expires. The instance is
+            thread-safe and makes at most one concurrent token request.
+            </para>
+            </remarks>
+        </member>
+        <member name="F:FCMCore.Auth.FcmAccessTokenProvider.Scope">
+            <summary>The OAuth2 scope requested for sending FCM messages.</summary>
+        </member>
+        <member name="P:FCMCore.Auth.FcmAccessTokenProvider.ProjectId">
+            <summary>The project ID parsed from the service-account key, if it supplied one.</summary>
+        </member>
+        <member name="M:FCMCore.Auth.FcmAccessTokenProvider.#ctor(FCMCore.Auth.ServiceAccountKey,System.Net.Http.HttpClient,System.TimeProvider)">
+            <summary>
+            Creates a provider from an already-parsed <see cref="T:FCMCore.Auth.ServiceAccountKey"/>. The provider owns
+            the RSA key it imports and disposes it when disposed.
+            </summary>
+            <param name="key">The parsed service-account key.</param>
+            <param name="httpClient">
+            The HTTP client used for the token exchange. When <see langword="null"/>, the provider creates
+            and owns its own. When supplied, the caller is responsible for disposing it.
+            </param>
+            <param name="timeProvider">Clock abstraction, mainly for testing. Defaults to the system clock.</param>
+        </member>
+        <member name="M:FCMCore.Auth.FcmAccessTokenProvider.FromServiceAccountFile(System.String,System.Net.Http.HttpClient)">
+            <summary>Loads a service-account JSON key from a file and creates a provider.</summary>
+            <param name="serviceAccountFilePath">Path to the service-account JSON key file.</param>
+            <param name="httpClient">Optional HTTP client for the token exchange (see the constructor).</param>
+        </member>
+        <member name="M:FCMCore.Auth.FcmAccessTokenProvider.FromServiceAccountJson(System.String,System.Net.Http.HttpClient)">
+            <summary>Parses a service-account JSON key from its content and creates a provider.</summary>
+            <param name="serviceAccountJson">The full JSON content of the service-account key.</param>
+            <param name="httpClient">Optional HTTP client for the token exchange (see the constructor).</param>
+        </member>
+        <member name="M:FCMCore.Auth.FcmAccessTokenProvider.GetTokenAsync(System.Threading.CancellationToken)">
+            <summary>
+            Returns a valid OAuth2 access token, exchanging a freshly signed JWT assertion for a new one
+            only when no cached token remains valid.
+            </summary>
+            <param name="cancellationToken">A token to cancel the token request.</param>
+        </member>
+        <member name="M:FCMCore.Auth.FcmAccessTokenProvider.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="T:FCMCore.Auth.FcmAuthenticationException">
+            <summary>
+            Thrown when a Google OAuth2 access token cannot be obtained for FCM — for example when the
+            service-account key is invalid or the token endpoint rejects the assertion.
+            </summary>
+        </member>
+        <member name="M:FCMCore.Auth.FcmAuthenticationException.#ctor(System.String,System.Exception)">
+            <summary>Creates the exception with a message and optional inner exception.</summary>
+        </member>
+        <member name="T:FCMCore.Auth.ServiceAccountKey">
+            <summary>
+            The fields read from a Google service-account JSON key file that are needed to obtain an OAuth2
+            access token for FCM.
+            </summary>
+        </member>
+        <member name="P:FCMCore.Auth.ServiceAccountKey.ClientEmail">
+            <summary>The service account's email address (the JWT <c>iss</c> and <c>sub</c> claim).</summary>
+        </member>
+        <member name="P:FCMCore.Auth.ServiceAccountKey.PrivateKeyPem">
+            <summary>The PEM-encoded RSA private key (the <c>private_key</c> field).</summary>
+        </member>
+        <member name="P:FCMCore.Auth.ServiceAccountKey.TokenUri">
+            <summary>The OAuth2 token endpoint (the <c>token_uri</c> field).</summary>
+        </member>
+        <member name="P:FCMCore.Auth.ServiceAccountKey.ProjectId">
+            <summary>The Google Cloud / Firebase project ID (the <c>project_id</c> field), if present.</summary>
+        </member>
+        <member name="M:FCMCore.Auth.ServiceAccountKey.FromFile(System.String)">
+            <summary>Reads and parses a service-account JSON key from a file on disk.</summary>
+            <param name="path">Path to the service-account JSON key file.</param>
+        </member>
+        <member name="M:FCMCore.Auth.ServiceAccountKey.FromJson(System.String)">
+            <summary>Parses a service-account JSON key from its string content.</summary>
+            <param name="json">The full JSON content of the service-account key.</param>
+        </member>
+        <member name="M:FCMCore.Auth.ServiceAccountKey.CreateRsa">
+            <summary>Imports the <see cref="P:FCMCore.Auth.ServiceAccountKey.PrivateKeyPem"/> into a new <see cref="T:System.Security.Cryptography.RSA"/> instance.</summary>
+        </member>
+        <member name="T:FCMCore.FcmClientOptions">
+            <summary>
+            Configuration for an <c>FcmClient</c>.
+            </summary>
+        </member>
+        <member name="P:FCMCore.FcmClientOptions.TokenProvider">
+            <summary>
+            The token provider that exchanges your service-account key for a short-lived OAuth2 access
+            token. Required.
+            </summary>
+        </member>
+        <member name="P:FCMCore.FcmClientOptions.ProjectId">
+            <summary>
+            Your Firebase / Google Cloud project ID, used in the request path
+            (<c>/v1/projects/{ProjectId}/messages:send</c>). When <see langword="null"/>, the project ID
+            parsed from the service-account key (<see cref="P:FCMCore.Auth.FcmAccessTokenProvider.ProjectId"/>) is used.
+            </summary>
+        </member>
+        <member name="P:FCMCore.FcmClientOptions.Timeout">
+            <summary>The request timeout applied to the underlying <see cref="T:System.Net.Http.HttpClient"/>. Defaults to 30 seconds.</summary>
+        </member>
+        <member name="P:FCMCore.FcmClientOptions.JsonSerializerOptions">
+            <summary>
+            The JSON serializer options used for the message body. Defaults to omitting
+            <see langword="null"/> values and <c>snake_case</c>-ing property names, as the FCM HTTP v1
+            API expects.
+            </summary>
+        </member>
+        <member name="P:FCMCore.FcmClientOptions.DefaultEndpoint">
+            <summary>The base address of the FCM HTTP v1 API.</summary>
+        </member>
+        <member name="M:FCMCore.FcmClientOptions.CreateDefaultJsonOptions">
+            <summary>Creates the default serializer options (<c>snake_case</c>, null values omitted) used for the message body.</summary>
+        </member>
+        <member name="T:FCMCore.FcmException">
+            <summary>
+            Thrown when FCM rejects a message and the caller requested that failures throw (for example via
+            <see cref="M:FCMCore.FcmResponse.EnsureSuccess"/>).
+            </summary>
+        </member>
+        <member name="M:FCMCore.FcmException.#ctor(FCMCore.FcmResponse)">
+            <summary>Creates the exception from a failed <see cref="T:FCMCore.FcmResponse"/>.</summary>
+        </member>
+        <member name="P:FCMCore.FcmException.Response">
+            <summary>The failed response returned by FCM.</summary>
+        </member>
+        <member name="T:FCMCore.FcmResponse">
+            <summary>
+            The result of attempting to send a message to Firebase Cloud Messaging (FCM).
+            </summary>
+        </member>
+        <member name="P:FCMCore.FcmResponse.IsSuccess">
+            <summary><see langword="true"/> when FCM accepted the message (HTTP 200).</summary>
+        </member>
+        <member name="P:FCMCore.FcmResponse.StatusCode">
+            <summary>The HTTP status code returned by FCM.</summary>
+        </member>
+        <member name="P:FCMCore.FcmResponse.MessageName">
+            <summary>
+            On success, the server-assigned message name from the response body, of the form
+            <c>projects/{project_id}/messages/{message_id}</c>. <see langword="null"/> on failure.
+            </summary>
+        </member>
+        <member name="P:FCMCore.FcmResponse.ErrorStatus">
+            <summary>
+            On failure, the canonical Google API error status from the response body (for example
+            <c>NOT_FOUND</c>, <c>INVALID_ARGUMENT</c> or <c>UNAVAILABLE</c>). <see langword="null"/> on success.
+            </summary>
+        </member>
+        <member name="P:FCMCore.FcmResponse.ErrorCode">
+            <summary>
+            On failure, the FCM-specific error code from <c>error.details[].errorCode</c> (for example
+            <c>UNREGISTERED</c>, <c>SENDER_ID_MISMATCH</c> or <c>THIRD_PARTY_AUTH_ERROR</c>). This is the
+            most precise signal for how to react; <see langword="null"/> when FCM did not supply one.
+            </summary>
+        </member>
+        <member name="P:FCMCore.FcmResponse.Reason">
+            <summary>
+            On failure, the human-readable <c>error.message</c> string from the response body.
+            <see langword="null"/> on success.
+            </summary>
+        </member>
+        <member name="P:FCMCore.FcmResponse.ShouldRemoveToken">
+            <summary>
+            <see langword="true"/> when the response indicates the registration token is permanently
+            invalid and should be removed from your database. This is the case for a
+            <c>UNREGISTERED</c> error code (the app was uninstalled or the token expired), a
+            <c>SENDER_ID_MISMATCH</c> (the token belongs to a different Firebase project), or an
+            HTTP 404.
+            </summary>
+        </member>
+        <member name="M:FCMCore.FcmResponse.EnsureSuccess">
+            <summary>Throws an <see cref="T:FCMCore.FcmException"/> when <see cref="P:FCMCore.FcmResponse.IsSuccess"/> is <see langword="false"/>.</summary>
+        </member>
+        <member name="T:FCMCore.FcmSettings">
+            <summary>
+            Bindable configuration for registering FCM services via dependency injection (for example from a
+            <c>Fcm</c> section of <c>appsettings.json</c>). Mutable, with a parameterless constructor, so it
+            binds directly from <c>Microsoft.Extensions.Configuration</c>.
+            </summary>
+        </member>
+        <member name="P:FCMCore.FcmSettings.ServiceAccountFilePath">
+            <summary>
+            Path to the Google service-account JSON key file on disk (downloaded from the Firebase
+            console under <i>Project settings → Service accounts → Generate new private key</i>). Required.
+            </summary>
+        </member>
+        <member name="P:FCMCore.FcmSettings.ProjectId">
+            <summary>
+            Your Firebase / Google Cloud project ID. Optional — when left empty, the <c>project_id</c>
+            from the service-account key file is used.
+            </summary>
+        </member>
+        <member name="P:FCMCore.FcmSettings.TimeoutSeconds">
+            <summary>The request timeout, in seconds, applied to the underlying HTTP client. Defaults to 30.</summary>
+        </member>
+        <member name="T:FCMCore.IFcmClient">
+            <summary>
+            Sends messages to Firebase Cloud Messaging (FCM).
+            </summary>
+        </member>
+        <member name="M:FCMCore.IFcmClient.SendAsync(FCMCore.Models.FcmMessage,System.Threading.CancellationToken)">
+            <summary>
+            Sends a single message to FCM and returns the result. Implementations do not throw for
+            FCM-level rejections (invalid token, etc.); inspect <see cref="P:FCMCore.FcmResponse.IsSuccess"/> or
+            call <see cref="M:FCMCore.FcmResponse.EnsureSuccess"/>.
+            </summary>
+            <param name="message">The message to deliver.</param>
+            <param name="cancellationToken">A token to cancel the request.</param>
+        </member>
+        <member name="M:FCMCore.IFcmClient.SendManyAsync(System.Collections.Generic.IReadOnlyList{FCMCore.Models.FcmMessage},System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Sends many messages concurrently, returning a result for each in the same order as the input.
+            Failures are reported per-message rather than throwing. FCM's HTTP v1 API has no multicast
+            endpoint, so this delivers each message individually over the shared HTTP/2 connection.
+            </summary>
+            <param name="messages">The messages to deliver.</param>
+            <param name="maxConcurrency">The maximum number of in-flight requests. Defaults to 10.</param>
+            <param name="cancellationToken">A token to cancel the operation.</param>
+        </member>
+        <member name="T:FCMCore.Models.AndroidConfig">
+            <summary>
+            Android-specific options for a message: delivery priority, time-to-live, collapsing, and the
+            Android notification override.
+            </summary>
+        </member>
+        <member name="P:FCMCore.Models.AndroidConfig.CollapseKey">
+            <summary>
+            An identifier of a group of messages that can be collapsed, so that only the last message is
+            sent when delivery can be resumed. A maximum of four distinct collapse keys is allowed at any
+            given time.
+            </summary>
+        </member>
+        <member name="P:FCMCore.Models.AndroidConfig.Priority">
+            <summary>The message's delivery priority. When <see langword="null"/>, FCM uses its default.</summary>
+        </member>
+        <member name="P:FCMCore.Models.AndroidConfig.PriorityValue">
+            <summary>The serialized value of <c>android.priority</c> (<c>"normal"</c> or <c>"high"</c>).</summary>
+        </member>
+        <member name="P:FCMCore.Models.AndroidConfig.TimeToLive">
+            <summary>
+            How long (up to 4 weeks) the message should be kept in FCM storage if the device is offline.
+            When <see langword="null"/>, FCM uses its default of 4 weeks.
+            </summary>
+        </member>
+        <member name="P:FCMCore.Models.AndroidConfig.TimeToLiveValue">
+            <summary>The serialized value of <c>android.ttl</c>, a duration string such as <c>"3600s"</c>.</summary>
+        </member>
+        <member name="P:FCMCore.Models.AndroidConfig.RestrictedPackageName">
+            <summary>The package name of the application where the registration tokens must match to receive the message.</summary>
+        </member>
+        <member name="P:FCMCore.Models.AndroidConfig.Data">
+            <summary>
+            Android-specific data payload. If present, it overrides the message-level
+            <see cref="P:FCMCore.Models.FcmMessage.Data"/> on Android. Values must be strings.
+            </summary>
+        </member>
+        <member name="P:FCMCore.Models.AndroidConfig.Notification">
+            <summary>The Android notification override.</summary>
+        </member>
+        <member name="P:FCMCore.Models.AndroidConfig.DirectBootOk">
+            <summary>
+            When <see langword="true"/>, allows the message to be delivered while the device is in direct
+            boot mode (before the user has unlocked it after a restart).
+            </summary>
+        </member>
+        <member name="T:FCMCore.Models.AndroidMessagePriority">
+            <summary>
+            The delivery priority of an Android message, controlling whether FCM wakes a dozing device.
+            </summary>
+        </member>
+        <member name="F:FCMCore.Models.AndroidMessagePriority.Normal">
+            <summary>
+            Normal priority. Delivery may be delayed to conserve the device's battery, and messages are
+            batched. Appropriate for notifications that are not time-critical.
+            </summary>
+        </member>
+        <member name="F:FCMCore.Models.AndroidMessagePriority.High">
+            <summary>
+            High priority. FCM attempts to deliver the message immediately, waking a sleeping device if
+            necessary. Required to reliably trigger a data message's background handler.
+            </summary>
+        </member>
+        <member name="T:FCMCore.Models.AndroidNotification">
+            <summary>
+            Android-specific notification options. Any value set here overrides the matching field of the
+            message's platform-independent <see cref="T:FCMCore.Models.FcmNotification"/> on Android devices.
+            </summary>
+        </member>
+        <member name="P:FCMCore.Models.AndroidNotification.Title">
+            <summary>The notification's title. Overrides <see cref="P:FCMCore.Models.FcmNotification.Title"/> on Android.</summary>
+        </member>
+        <member name="P:FCMCore.Models.AndroidNotification.Body">
+            <summary>The notification's body. Overrides <see cref="P:FCMCore.Models.FcmNotification.Body"/> on Android.</summary>
+        </member>
+        <member name="P:FCMCore.Models.AndroidNotification.Image">
+            <summary>The URL of an image to display. Overrides <see cref="P:FCMCore.Models.FcmNotification.Image"/> on Android.</summary>
+        </member>
+        <member name="P:FCMCore.Models.AndroidNotification.Icon">
+            <summary>The notification icon resource (a drawable in your app, e.g. <c>ic_stat_notify</c>).</summary>
+        </member>
+        <member name="P:FCMCore.Models.AndroidNotification.Color">
+            <summary>The notification's accent color, in <c>#rrggbb</c> format.</summary>
+        </member>
+        <member name="P:FCMCore.Models.AndroidNotification.Sound">
+            <summary>The sound to play when the device receives the notification (a resource name, or <c>default</c>).</summary>
+        </member>
+        <member name="P:FCMCore.Models.AndroidNotification.Tag">
+            <summary>An identifier used to replace an existing notification in the drawer with the same tag.</summary>
+        </member>
+        <member name="P:FCMCore.Models.AndroidNotification.ClickAction">
+            <summary>The action associated with a user tap (an intent action your app registers).</summary>
+        </member>
+        <member name="P:FCMCore.Models.AndroidNotification.ChannelId">
+            <summary>
+            The <c>NotificationChannel</c> ID this notification is posted to (required to be visible on
+            Android 8.0+ / API level 26 and above; the channel must already exist in the app).
+            </summary>
+        </member>
+        <member name="P:FCMCore.Models.AndroidNotification.BodyLocKey">
+            <summary>The key of a string resource in the app used to localize the body text.</summary>
+        </member>
+        <member name="P:FCMCore.Models.AndroidNotification.TitleLocKey">
+            <summary>The key of a string resource in the app used to localize the title text.</summary>
+        </member>
+        <member name="T:FCMCore.Models.FcmMessage">
+            <summary>
+            A single message to deliver through FCM. Exactly one target must be set — a device
+            <see cref="P:FCMCore.Models.FcmMessage.Token"/>, a <see cref="P:FCMCore.Models.FcmMessage.Topic"/>, or a <see cref="P:FCMCore.Models.FcmMessage.Condition"/> — together with any
+            combination of a <see cref="P:FCMCore.Models.FcmMessage.Notification"/>, a <see cref="P:FCMCore.Models.FcmMessage.Data"/> payload, and
+            <see cref="P:FCMCore.Models.FcmMessage.Android"/> overrides.
+            </summary>
+            <remarks>
+            Prefer the static factory methods (<see cref="M:FCMCore.Models.FcmMessage.Alert(System.String,System.String,System.String)"/>,
+            <see cref="M:FCMCore.Models.FcmMessage.DataMessage(System.String,System.Collections.Generic.IDictionary{System.String,System.String})"/>, <see cref="M:FCMCore.Models.FcmMessage.ToTopic(System.String,System.String,System.String)"/>) for common cases.
+            </remarks>
+        </member>
+        <member name="P:FCMCore.Models.FcmMessage.Token">
+            <summary>
+            The registration token of the single target device. Mutually exclusive with
+            <see cref="P:FCMCore.Models.FcmMessage.Topic"/> and <see cref="P:FCMCore.Models.FcmMessage.Condition"/>.
+            </summary>
+        </member>
+        <member name="P:FCMCore.Models.FcmMessage.Topic">
+            <summary>
+            The topic to send to (without the <c>/topics/</c> prefix). Every device subscribed to the
+            topic receives the message. Mutually exclusive with <see cref="P:FCMCore.Models.FcmMessage.Token"/> and <see cref="P:FCMCore.Models.FcmMessage.Condition"/>.
+            </summary>
+        </member>
+        <member name="P:FCMCore.Models.FcmMessage.Condition">
+            <summary>
+            A boolean condition over topics, for example <c>'news' in topics &amp;&amp; 'sports' in topics</c>.
+            Mutually exclusive with <see cref="P:FCMCore.Models.FcmMessage.Token"/> and <see cref="P:FCMCore.Models.FcmMessage.Topic"/>.
+            </summary>
+        </member>
+        <member name="P:FCMCore.Models.FcmMessage.Notification">
+            <summary>The platform-independent notification shown to the user.</summary>
+        </member>
+        <member name="P:FCMCore.Models.FcmMessage.Data">
+            <summary>
+            An arbitrary key/value payload delivered to the app. All keys and values must be strings. A
+            data-only message (no <see cref="P:FCMCore.Models.FcmMessage.Notification"/>) is handled entirely by the app.
+            </summary>
+        </member>
+        <member name="P:FCMCore.Models.FcmMessage.Android">
+            <summary>Android-specific delivery options and notification overrides.</summary>
+        </member>
+        <member name="M:FCMCore.Models.FcmMessage.ResolveTarget">
+            <summary>
+            Validates that exactly one target is set, returning it as a <c>(field, value)</c> pair.
+            </summary>
+            <exception cref="T:System.InvalidOperationException">When zero, or more than one, target is set.</exception>
+        </member>
+        <member name="M:FCMCore.Models.FcmMessage.ToJsonNode(System.Text.Json.JsonSerializerOptions)">
+            <summary>Serializes the message into the <c>message</c> JSON object expected by the FCM HTTP v1 API.</summary>
+        </member>
+        <member name="M:FCMCore.Models.FcmMessage.Alert(System.String,System.String,System.String)">
+            <summary>Creates a user-facing notification message to a single device token.</summary>
+        </member>
+        <member name="M:FCMCore.Models.FcmMessage.DataMessage(System.String,System.Collections.Generic.IDictionary{System.String,System.String})">
+            <summary>
+            Creates a data-only message to a single device token, handled by the app's background
+            message handler. Uses high Android priority so the handler is woken reliably.
+            </summary>
+        </member>
+        <member name="M:FCMCore.Models.FcmMessage.ToTopic(System.String,System.String,System.String)">
+            <summary>Creates a user-facing notification message to every device subscribed to a topic.</summary>
+        </member>
+        <member name="M:FCMCore.Models.FcmMessage.ToCondition(System.String,System.String,System.String)">
+            <summary>
+            Creates a user-facing notification message to the devices matching a topic condition, for
+            example <c>'news' in topics &amp;&amp; 'sports' in topics</c>.
+            </summary>
+        </member>
+        <member name="T:FCMCore.Models.FcmNotification">
+            <summary>
+            The platform-independent notification shown to the user. On Android these values are used unless
+            overridden by an <see cref="T:FCMCore.Models.AndroidNotification"/> on the message's <see cref="T:FCMCore.Models.AndroidConfig"/>.
+            </summary>
+        </member>
+        <member name="P:FCMCore.Models.FcmNotification.Title">
+            <summary>The notification's title.</summary>
+        </member>
+        <member name="P:FCMCore.Models.FcmNotification.Body">
+            <summary>The notification's body text.</summary>
+        </member>
+        <member name="P:FCMCore.Models.FcmNotification.Image">
+            <summary>The URL of an image to display in the notification.</summary>
+        </member>
+    </members>
+</doc>

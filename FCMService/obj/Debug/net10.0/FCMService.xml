@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>FCMService</name>
+    </assembly>
+    <members>
+        <member name="T:FCMService.FcmClient">
+            <summary>
+            A client for the FCM HTTP v1 provider API. It authenticates each request with an OAuth2 access
+            token obtained from your service-account key and delivers messages to a device token, a topic, or
+            a topic condition.
+            </summary>
+            <remarks>
+            The client is thread-safe and designed to be long-lived: create one per project and reuse it so
+            the HTTP/2 connection and the cached access token are shared across sends.
+            </remarks>
+        </member>
+        <member name="M:FCMService.FcmClient.#ctor(FCMCore.FcmClientOptions)">
+            <summary>Creates a client that owns its own HTTP/2 <see cref="T:System.Net.Http.HttpClient"/>.</summary>
+            <param name="options">The client configuration.</param>
+        </member>
+        <member name="M:FCMService.FcmClient.#ctor(FCMCore.FcmClientOptions,System.Net.Http.HttpClient,System.Boolean)">
+            <summary>
+            Creates a client using a caller-supplied <see cref="T:System.Net.Http.HttpClient"/> (for example one from
+            <c>IHttpClientFactory</c>). The caller is responsible for the base address and for disposing
+            the client.
+            </summary>
+            <param name="options">The client configuration.</param>
+            <param name="httpClient">A pre-configured HTTP client.</param>
+            <param name="ownsHttpClient">When <see langword="true"/>, the <see cref="T:System.Net.Http.HttpClient"/> is disposed with this instance.</param>
+        </member>
+        <member name="M:FCMService.FcmClient.SendAsync(FCMCore.Models.FcmMessage,System.Threading.CancellationToken)">
+            <summary>
+            Sends a single message to FCM and returns the result. This method does not throw for FCM-level
+            rejections (invalid token, etc.); inspect <see cref="P:FCMCore.FcmResponse.IsSuccess"/> or call
+            <see cref="M:FCMCore.FcmResponse.EnsureSuccess"/>.
+            </summary>
+            <param name="message">The message to deliver.</param>
+            <param name="cancellationToken">A token to cancel the request.</param>
+        </member>
+        <member name="M:FCMService.FcmClient.SendManyAsync(System.Collections.Generic.IReadOnlyList{FCMCore.Models.FcmMessage},System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Sends many messages concurrently, returning a result for each in the same order as the input.
+            Failures are reported per-message rather than throwing.
+            </summary>
+            <param name="messages">The messages to deliver.</param>
+            <param name="maxConcurrency">The maximum number of in-flight requests. Defaults to 10.</param>
+            <param name="cancellationToken">A token to cancel the operation.</param>
+        </member>
+        <member name="M:FCMService.FcmClient.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="T:Microsoft.Extensions.DependencyInjection.FcmServiceCollectionExtensions">
+            <summary>
+            Dependency-injection extensions for registering FCM services.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Extensions.DependencyInjection.FcmServiceCollectionExtensions.AddFcm(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Action{FCMCore.FcmSettings})">
+            <summary>
+            Registers an <see cref="T:FCMCore.IFcmClient"/> (and its supporting <see cref="T:FCMCore.Auth.FcmAccessTokenProvider"/>)
+            as singletons, configured by the supplied delegate.
+            </summary>
+            <param name="services">The service collection to add to.</param>
+            <param name="configure">A delegate that populates the <see cref="T:FCMCore.FcmSettings"/>.</param>
+            <returns>The same <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection"/>, for chaining.</returns>
+        </member>
+        <member name="M:Microsoft.Extensions.DependencyInjection.FcmServiceCollectionExtensions.AddFcm(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration)">
+            <summary>
+            Registers an <see cref="T:FCMCore.IFcmClient"/> (and its supporting <see cref="T:FCMCore.Auth.FcmAccessTokenProvider"/>)
+            as singletons, bound from a configuration section (for example <c>Configuration.GetSection("Fcm")</c>).
+            </summary>
+            <param name="services">The service collection to add to.</param>
+            <param name="configuration">The configuration section to bind an <see cref="T:FCMCore.FcmSettings"/> from.</param>
+            <returns>The same <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection"/>, for chaining.</returns>
+        </member>
+    </members>
+</doc>
