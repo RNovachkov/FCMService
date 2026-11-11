@@ -12,7 +12,7 @@
 
     <!-- NuGet metadata -->
     <PackageId>FCMService</PackageId>
-    <Version>10.0.0</Version>
+    <Version>10.0.1</Version>
     <Authors>Rumen Novachkov</Authors>
     <Description>A lightweight .NET 10 library for sending Android push notifications through Firebase Cloud Messaging (FCM) using the HTTP v1 API and service-account (OAuth2) authentication.</Description>
     <PackageTags>fcm;firebase;push;notifications;android;http2;oauth2;google</PackageTags>
