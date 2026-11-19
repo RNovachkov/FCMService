@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net11.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
@@ -12,9 +12,9 @@
 
     <!-- NuGet metadata -->
     <PackageId>FCMService</PackageId>
-    <Version>10.0.1</Version>
+    <Version>11.0.0</Version>
     <Authors>Rumen Novachkov</Authors>
-    <Description>A lightweight .NET 10 library for sending Android push notifications through Firebase Cloud Messaging (FCM) using the HTTP v1 API and service-account (OAuth2) authentication.</Description>
+    <Description>A lightweight .NET 11 library for sending Android push notifications through Firebase Cloud Messaging (FCM) using the HTTP v1 API and service-account (OAuth2) authentication.</Description>
     <PackageTags>fcm;firebase;push;notifications;android;http2;oauth2;google</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -23,21 +23,24 @@
     <RepositoryUrl>https://github.com/RNovachkov/FCMService</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-
+	<PackageIcon>FCMService.png</PackageIcon>
     <!-- Bundle the FCMCore assembly (and its XML docs) into this single package. -->
     <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeReferencedProjectsInPackage</TargetsForTfmSpecificBuildOutput>
   </PropertyGroup>
 
   <ItemGroup>
+	<None Include="Assets/FCMService.png" Pack="true" PackagePath="\" />
     <!-- The package README lives next to this project and is packed into the package. -->
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- For the optional AddFcm() dependency-injection helper. -->
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="11.0.0" />
+  </ItemGroup>
+	
+  <ItemGroup>
+    <Folder Include="Assets\" />
   </ItemGroup>
 
   <ItemGroup>
@@ -58,7 +61,7 @@
        so the single FCMService package is self-contained. -->
   <Target Name="IncludeReferencedProjectsInPackage" DependsOnTargets="ResolveReferences">
     <ItemGroup>
-      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths->WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" />
+      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths-&gt;WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" />
     </ItemGroup>
   </Target>
 

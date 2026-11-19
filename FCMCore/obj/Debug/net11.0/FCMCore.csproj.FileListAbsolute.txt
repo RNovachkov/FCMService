@@ -1,0 +1,15 @@
+C:\Users\rumen\Developer\FCMService\FCMCore\bin\Debug\net11.0\FCMCore.deps.json
+C:\Users\rumen\Developer\FCMService\FCMCore\bin\Debug\net11.0\FCMCore.dll
+C:\Users\rumen\Developer\FCMService\FCMCore\bin\Debug\net11.0\FCMCore.pdb
+C:\Users\rumen\Developer\FCMService\FCMCore\bin\Debug\net11.0\FCMCore.xml
+C:\Users\rumen\Developer\FCMService\FCMCore\obj\Debug\net11.0\FCMCore.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\rumen\Developer\FCMService\FCMCore\obj\Debug\net11.0\FCMCore.AssemblyInfoInputs.cache
+C:\Users\rumen\Developer\FCMService\FCMCore\obj\Debug\net11.0\FCMCore.AssemblyInfo.cs
+C:\Users\rumen\Developer\FCMService\FCMCore\obj\Debug\net11.0\FCMCore.csproj.CoreCompileInputs.cache
+C:\Users\rumen\Developer\FCMService\FCMCore\obj\Debug\net11.0\FCMCore.sourcelink.json
+C:\Users\rumen\Developer\FCMService\FCMCore\obj\Debug\net11.0\FCMCore.dll
+C:\Users\rumen\Developer\FCMService\FCMCore\obj\Debug\net11.0\refint\FCMCore.dll
+C:\Users\rumen\Developer\FCMService\FCMCore\obj\Debug\net11.0\FCMCore.xml
+C:\Users\rumen\Developer\FCMService\FCMCore\obj\Debug\net11.0\FCMCore.pdb
+C:\Users\rumen\Developer\FCMService\FCMCore\obj\Debug\net11.0\ref\FCMCore.dll
+C:\Users\rumen\Developer\FCMService\FCMCore\obj\Debug\net11.0\FCMCore.csproj.Up2Date
