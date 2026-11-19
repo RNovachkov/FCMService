@@ -1,6 +1,8 @@
+![logo](<FCMService/Assets/FCMService.png>)
+
 # FCMService
 
-A lightweight .NET 10 library for sending Android push notifications through **Firebase Cloud Messaging (FCM)** using the **HTTP v1 API** and service-account (OAuth2) authentication.
+A lightweight .NET 11 library for sending Android push notifications through **Firebase Cloud Messaging (FCM)** using the **HTTP v1 API** and service-account (OAuth2) authentication.
 
 - **Service-account auth** — signs an RS256 JWT from your service-account key, exchanges it for a short-lived OAuth2 access token, and caches it within Google's refresh window.
 - **Android-first payloads** — a platform-independent notification plus a full `android` override block (priority, TTL, collapse key, channel, icon, color, sound…) and arbitrary data messages.

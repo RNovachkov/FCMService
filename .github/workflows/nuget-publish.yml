@@ -29,7 +29,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '10.0.x'
+        dotnet-version: '11.0.x'
 
     - name: Get Version from .csproj
       id: get_version
@@ -42,7 +42,7 @@ jobs:
 
         if [ -z "$CSPROJ_FILE" ]; then
           echo "Error: No FCMService.csproj file found"
-          VERSION="10.0.0"
+          VERSION="11.0.0"
         else
           echo "Using .csproj file: $CSPROJ_FILE"
 
@@ -56,7 +56,7 @@ jobs:
 
           # Final fallback.
           if [ -z "$VERSION" ]; then
-            VERSION="10.0.0"
+            VERSION="11.0.0"
             echo "Warning: No version found in $CSPROJ_FILE, using default $VERSION"
           fi
         fi
